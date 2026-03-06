@@ -17,7 +17,7 @@
 
 <br/>
 
-![Demo Banner](https://via.placeholder.com/900x300/0f172a/38bdf8?text=AI+PDF+Knowledge+Assistant+—+RAG+Chatbot)
+
 
 </div>
 
