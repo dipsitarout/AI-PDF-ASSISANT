@@ -6,10 +6,26 @@ from rag_pipeline import RAGPipeline
 
 st.set_page_config(page_title="AI PDF Assistant", page_icon="🤖")
 
+# ---------------- SESSION STATE ---------------- #
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "preview_pdf" not in st.session_state:
+    st.session_state.preview_pdf = None
+
+if "documents_loaded" not in st.session_state:
+    st.session_state.documents_loaded = False
+
+if "rag" not in st.session_state:
+    st.session_state.rag = RAGPipeline()
+
+rag = st.session_state.rag
+
+# ---------------- TITLE ---------------- #
+
 st.title("📄 AI PDF Knowledge Assistant")
 st.caption("Ask questions from your documents")
-
-rag = RAGPipeline()
 
 # ---------------- SIDEBAR ---------------- #
 
@@ -47,10 +63,11 @@ with st.sidebar:
 
     if st.button("🧹 Clear Chat"):
         st.session_state.chat_history = []
+        st.session_state.preview_pdf = None
 
     st.divider()
 
-    if "chat_history" in st.session_state and st.session_state.chat_history:
+    if st.session_state.chat_history:
 
         if st.button("⬇ Download Chat"):
 
@@ -76,14 +93,14 @@ with st.sidebar:
                     file_name="chat_history.pdf"
                 )
 
-# ---------------- CHAT STATE ---------------- #
+# ---------------- RESET WHEN NEW PDF UPLOADED ---------------- #
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+if uploaded_files:
+    st.session_state.documents_loaded = False
 
 # ---------------- PROCESS PDFs ---------------- #
 
-if uploaded_files:
+if uploaded_files and not st.session_state.documents_loaded:
 
     pdf_paths = []
 
@@ -91,14 +108,20 @@ if uploaded_files:
 
         for file in uploaded_files:
 
+            file_bytes = file.read()
+
             temp = tempfile.NamedTemporaryFile(delete=False)
-            temp.write(file.read())
+            temp.write(file_bytes)
+            temp.close()
+
             pdf_paths.append({
                 "path": temp.name,
                 "filename": file.name
-                })
+            })
 
         rag.load_pdfs(pdf_paths)
+
+        st.session_state.documents_loaded = True
 
     st.success("Documents processed successfully!")
 
@@ -129,7 +152,7 @@ if user_input:
 
 # ---------------- DISPLAY CHAT ---------------- #
 
-for chat in st.session_state.chat_history:
+for chat_index, chat in enumerate(st.session_state.chat_history):
 
     if chat["role"] == "user":
 
@@ -149,22 +172,43 @@ for chat in st.session_state.chat_history:
                 for i, s in enumerate(chat["sources"]):
 
                     st.write(
-                        f"{s['filename']} (Page {s['page']}) - {s['section']}"
+                        f"📄 **{s['filename']}** • Page {s['page']} • {s['section']}"
                     )
 
                     if st.button(
-                        f"Preview {s['filename']} Page {s['page']}",
-                        key=f"{s['filename']}_{s['page']}_{i}"
+                        f"Preview Page {s['page']}",
+                        key=f"{chat_index}_{i}"
                     ):
 
                         with open(s["path"], "rb") as f:
-                            base64_pdf = base64.b64encode(
-                                f.read()
-                            ).decode("utf-8")
+                            pdf_bytes = f.read()
 
-                        pdf_display = f"""
-                        <iframe src="data:application/pdf;base64,{base64_pdf}#page={s['page']}"
-                        width="700" height="900"></iframe>
-                        """
+                        st.session_state.preview_pdf = {
+                            "bytes": pdf_bytes,
+                            "page": s["page"]
+                        }
+                        st.rerun()
 
-                        st.markdown(pdf_display, unsafe_allow_html=True)
+# ---------------- PDF PREVIEW ---------------- #
+
+# ---------------- PDF PREVIEW ---------------- #
+
+if st.session_state.preview_pdf:
+
+    pdf_bytes = st.session_state.preview_pdf["bytes"]
+    page = st.session_state.preview_pdf["page"]
+
+    base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+
+    st.markdown("## 📄 PDF Preview")
+
+    pdf_display = f"""
+    <iframe
+    src="data:application/pdf;base64,{base64_pdf}#page={page}"
+    width="100%"
+    height="900"
+    type="application/pdf">
+    </iframe>
+    """
+
+    st.markdown(pdf_display, unsafe_allow_html=True)
