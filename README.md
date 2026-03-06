@@ -58,25 +58,20 @@
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|Uploads PDFs| B[Streamlit UI\napp.py]
-    B -->|Raw PDF files| C[PyPDFLoader\nText Extraction]
-    C -->|Raw text + metadata| D[Text Splitter\nChunk documents]
-    D -->|Text chunks| E[Sentence Transformers\nGenerate Embeddings]
-    E -->|Vectors| F[(FAISS\nVector Store)]
+    A([User]) -->|Upload PDFs| B[Streamlit UI]
+    B -->|PDF files| C[PyPDFLoader]
+    C -->|Text + metadata| D[Text Splitter]
+    D -->|Chunks| E[Sentence Transformers]
+    E -->|Vectors| F[(FAISS Vector Store)]
 
-    A -->|Asks question| G[Query Input]
-    G -->|User query| H[Sentence Transformers\nEmbed query]
+    A -->|Ask question| G[Query Input]
+    G -->|User query| H[Embed Query]
     H -->|Query vector| F
-    F -->|Top-k relevant chunks| I[LangChain Retriever]
-    I -->|Context + Metadata| J[Prompt Builder]
-    J -->|Augmented prompt| K[Groq LLM\nLlama 3.1]
-    K -->|Answer + Sources| B
+    F -->|Top-k chunks| I[LangChain Retriever]
+    I -->|Context + metadata| J[Prompt Builder]
+    J -->|Augmented prompt| K[Groq Llama 3.1]
+    K -->|Answer + sources| B
     B -->|Response with citations| A
-
-    style A fill:#4f46e5,color:#fff
-    style F fill:#0ea5e9,color:#fff
-    style K fill:#f97316,color:#fff
-    style B fill:#10b981,color:#fff
 ```
 
 ---
@@ -86,10 +81,10 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     actor User
-    participant UI as 🖥️ Streamlit UI
-    participant RAG as ⚙️ RAG Pipeline
-    participant FAISS as 🗄️ FAISS Store
-    participant LLM as 🤖 Groq Llama 3.1
+    participant UI as Streamlit UI
+    participant RAG as RAG Pipeline
+    participant FAISS as FAISS Store
+    participant LLM as Groq Llama 3.1
 
     User->>UI: Upload PDF documents
     UI->>RAG: Trigger ingestion pipeline
@@ -97,14 +92,14 @@ sequenceDiagram
     RAG->>RAG: Split into chunks with metadata
     RAG->>RAG: Generate embeddings (Sentence Transformers)
     RAG->>FAISS: Store vectors + metadata
-    FAISS-->>UI: ✅ Documents indexed
+    FAISS-->>UI: Documents indexed
 
     User->>UI: Ask a question
     UI->>RAG: Pass question + chat history
     RAG->>RAG: Embed query
     RAG->>FAISS: Similarity search (top-k chunks)
     FAISS-->>RAG: Return relevant chunks + sources
-    RAG->>LLM: Send [context + question + memory]
+    RAG->>LLM: Send context + question + memory
     LLM-->>RAG: Generated answer
     RAG-->>UI: Answer + source citations
     UI-->>User: Display response with page preview
