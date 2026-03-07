@@ -193,22 +193,21 @@ for chat_index, chat in enumerate(st.session_state.chat_history):
 
 # ---------------- PDF PREVIEW ---------------- #
 
+# ---------------- PDF PREVIEW ---------------- #
+
 if st.session_state.preview_pdf:
 
     pdf_bytes = st.session_state.preview_pdf["bytes"]
     page = st.session_state.preview_pdf["page"]
 
-    base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+    st.markdown(f"## 📄 PDF Preview (Page {page})")
 
-    st.markdown("## 📄 PDF Preview")
+    st.download_button(
+        "Download PDF",
+        pdf_bytes,
+        file_name="preview.pdf"
+    )
 
-    pdf_display = f"""
-    <iframe
-    src="data:application/pdf;base64,{base64_pdf}#page={page}"
-    width="100%"
-    height="900"
-    type="application/pdf">
-    </iframe>
-    """
+    st.write("Preview below:")
 
-    st.markdown(pdf_display, unsafe_allow_html=True)
+    st.pdf(pdf_bytes)

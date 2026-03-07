@@ -8,3 +8,4 @@ faiss-cpu
 sentence-transformers
 pypdf
 fpdf
+streamlit>=1.32
