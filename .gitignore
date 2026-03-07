@@ -1,6 +1,5 @@
 venv/
+.venv/
 __pycache__/
-*.pyc
 *.pdf
-.env
 chat_history.pdf
