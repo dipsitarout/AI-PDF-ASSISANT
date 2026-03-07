@@ -1,4 +1,5 @@
 streamlit
+streamlit[pdf]
 langchain
 langchain-community
 langchain-huggingface
